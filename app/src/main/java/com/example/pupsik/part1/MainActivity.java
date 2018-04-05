@@ -22,43 +22,46 @@ public class MainActivity extends Activity {
     private ListView listView;
     private ArrayList<String> mDeviceList = new ArrayList<String>();
     private BluetoothAdapter mBluetoothAdapter; //Он от меня что-то хочет, но все и так работает
+    private final static int REQUEST_ENABLE_BT = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //Нахожу элемент, куда буду записывать имена телефонов
-        listView = (ListView) findViewById(R.id.blutList);
-
-        //Определяю стандартный блютуз адаптер
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        //Начинаю поиск
-        mBluetoothAdapter.startDiscovery();
-
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(mReceiver, filter);
-
-    }
-
-
-    @Override
-    protected void onDestroy() {
-        unregisterReceiver(mReceiver);
-        super.onDestroy();
-    }
-
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                BluetoothDevice device = intent
-                        .getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                mDeviceList.add(device.getName() + "\n" + device.getAddress());
-                Log.i("BT", device.getName() + "\n" + device.getAddress());
-                listView.setAdapter(new ArrayAdapter<String>(context,
-                        android.R.layout.simple_list_item_1, mDeviceList));
-            }
+        if (!mBluetoothAdapter.isEnabled()) { //включаем блютуз если не включен
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
-    };
+            listView = (ListView) findViewById(R.id.blutList);
+
+            //Определяю стандартный блютуз адаптер
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            //Начинаю поиск
+            mBluetoothAdapter.startDiscovery();
+
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(mReceiver, filter);
+
+        }
+
+
+        @Override
+        protected void onDestroy () {
+            unregisterReceiver(mReceiver);
+            super.onDestroy();
+        }
+
+        private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                    BluetoothDevice device = intent
+                            .getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    mDeviceList.add(device.getName() + "\n" + device.getAddress());
+                    Log.i("BT", device.getName() + "\n" + device.getAddress());
+                    listView.setAdapter(new ArrayAdapter<String>(context,
+                            android.R.layout.simple_list_item_1, mDeviceList));
+                }
+            }
+        };
 }
